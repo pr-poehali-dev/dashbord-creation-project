@@ -4,9 +4,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const Index = () => {
   const [formData, setFormData] = useState({ name: '', phone: '', message: '' });
+  const [selectedCar, setSelectedCar] = useState({
+    brand: '',
+    model: '',
+    engine: '',
+    year: '',
+    power: ''
+  });
+
+  const cars = [
+    { brand: 'Audi', model: 'A4', engine: '2.0 TFSI', year: '2020', power: '190' },
+    { brand: 'Audi', model: 'A6', engine: '3.0 TDI', year: '2019', power: '272' },
+    { brand: 'BMW', model: '320i', engine: '2.0', year: '2021', power: '184' },
+    { brand: 'BMW', model: '520d', engine: '2.0 Diesel', year: '2020', power: '190' },
+    { brand: 'BMW', model: 'X5', engine: '3.0d', year: '2019', power: '265' },
+    { brand: 'Mercedes-Benz', model: 'C200', engine: '1.5', year: '2021', power: '184' },
+    { brand: 'Mercedes-Benz', model: 'E220d', engine: '2.0 Diesel', year: '2020', power: '194' },
+    { brand: 'Mercedes-Benz', model: 'GLE', engine: '3.0 Diesel', year: '2019', power: '272' },
+    { brand: 'Volkswagen', model: 'Golf GTI', engine: '2.0 TSI', year: '2021', power: '245' },
+    { brand: 'Volkswagen', model: 'Tiguan', engine: '2.0 TDI', year: '2020', power: '150' },
+    { brand: 'Volkswagen', model: 'Passat', engine: '1.5 TSI', year: '2019', power: '150' },
+    { brand: 'Škoda', model: 'Octavia', engine: '1.5 TSI', year: '2021', power: '150' },
+    { brand: 'Škoda', model: 'Superb', engine: '2.0 TSI', year: '2020', power: '190' },
+    { brand: 'Toyota', model: 'Camry', engine: '2.5', year: '2021', power: '181' },
+    { brand: 'Toyota', model: 'RAV4', engine: '2.0', year: '2020', power: '173' },
+    { brand: 'Ford', model: 'Focus ST', engine: '2.3 EcoBoost', year: '2020', power: '280' },
+    { brand: 'Ford', model: 'Mondeo', engine: '2.0 TDCi', year: '2019', power: '150' },
+    { brand: 'Hyundai', model: 'Tucson', engine: '2.0 CRDi', year: '2021', power: '185' },
+    { brand: 'Hyundai', model: 'Santa Fe', engine: '2.2 CRDi', year: '2020', power: '200' },
+    { brand: 'Kia', model: 'Sportage', engine: '2.0 CRDi', year: '2021', power: '185' },
+  ];
+
+  const brands = [...new Set(cars.map(car => car.brand))].sort();
 
   const benefits = [
     {
@@ -270,11 +309,86 @@ const Index = () => {
             <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
               Готовы <span className="text-primary">начать</span>?
             </h2>
-            <p className="text-xl text-muted-foreground">Оставьте заявку и мы свяжемся с вами в течение 15 минут</p>
+            <p className="text-xl text-muted-foreground">Выберите ваш автомобиль и оставьте заявку</p>
           </div>
           <Card className="border-2 border-primary/20 bg-card/50 backdrop-blur">
             <CardContent className="p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4 p-6 bg-muted/30 rounded-lg border border-border">
+                  <h3 className="text-lg font-heading font-semibold flex items-center gap-2">
+                    <Icon name="Car" size={20} />
+                    Выберите ваш автомобиль
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Марка</label>
+                      <Select 
+                        value={selectedCar.brand} 
+                        onValueChange={(value) => {
+                          setSelectedCar({...selectedCar, brand: value, model: '', engine: '', year: '', power: ''});
+                        }}
+                      >
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Выберите марку" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {brands.map((brand) => (
+                            <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Модель</label>
+                      <Select 
+                        value={selectedCar.model} 
+                        onValueChange={(value) => {
+                          const car = cars.find(c => c.brand === selectedCar.brand && c.model === value);
+                          if (car) {
+                            setSelectedCar({
+                              brand: car.brand,
+                              model: car.model,
+                              engine: car.engine,
+                              year: car.year,
+                              power: car.power
+                            });
+                          }
+                        }}
+                        disabled={!selectedCar.brand}
+                      >
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Выберите модель" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cars
+                            .filter(car => car.brand === selectedCar.brand)
+                            .map((car, index) => (
+                              <SelectItem key={index} value={car.model}>
+                                {car.model} ({car.engine}, {car.year})
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {selectedCar.model && (
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-background rounded-lg border border-primary/20 animate-fade-in">
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Объем двигателя</div>
+                        <div className="text-lg font-bold text-primary">{selectedCar.engine}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Год выпуска</div>
+                        <div className="text-lg font-bold text-secondary">{selectedCar.year}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Мощность</div>
+                        <div className="text-lg font-bold text-accent">{selectedCar.power} л.с.</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">Ваше имя</label>
@@ -300,7 +414,7 @@ const Index = () => {
                 <div>
                   <label className="block text-sm font-medium mb-2">Сообщение</label>
                   <Textarea 
-                    placeholder="Расскажите о вашем автомобиле и пожеланиях..."
+                    placeholder="Расскажите о ваших пожеланиях..."
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                     rows={4}
