@@ -20,18 +20,26 @@ const Dashboard = () => {
   const [activeSection, setActiveSection] = useState('analytics');
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch('https://functions.poehali.dev/727ff944-144e-4cc4-9d77-c3e6732a61ec')
       .then(res => res.json())
       .then(result => {
         setData(result);
         setLoading(false);
+        setLastUpdate(new Date());
       })
       .catch(error => {
         console.error('Error fetching data:', error);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const menuItems = [
@@ -141,10 +149,18 @@ const Dashboard = () => {
 
         <main className="flex-1 p-8">
           <div className="mb-8 animate-fade-in">
-            <h2 className="text-3xl font-heading font-bold text-foreground mb-2">
-              {menuItems.find(item => item.id === activeSection)?.label}
-            </h2>
-            <p className="text-muted-foreground">Добро пожаловать в панель управления</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-heading font-bold text-foreground mb-2">
+                  {menuItems.find(item => item.id === activeSection)?.label}
+                </h2>
+                <p className="text-muted-foreground">Добро пожаловать в панель управления</p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Icon name="RefreshCw" size={14} className="animate-spin" />
+                <span>Обновлено: {lastUpdate.toLocaleTimeString('ru-RU')}</span>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
