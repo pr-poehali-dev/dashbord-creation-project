@@ -1,11 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { Progress } from '@/components/ui/progress';
 
+interface DashboardData {
+  stats: {
+    active_users: number;
+    revenue: number;
+    conversion_rate: number;
+    new_requests: number;
+    stat_date: string;
+  };
+  monthly_activity: Array<{ month: string; value: number }>;
+  system_activity: Array<{ name: string; value: number }>;
+}
+
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState('analytics');
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('https://functions.poehali.dev/727ff944-144e-4cc4-9d77-c3e6732a61ec')
+      .then(res => res.json())
+      .then(result => {
+        setData(result);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        setLoading(false);
+      });
+  }, []);
 
   const menuItems = [
     { id: 'analytics', label: 'Аналитика', icon: 'LineChart' },
@@ -15,31 +42,60 @@ const Dashboard = () => {
     { id: 'settings', label: 'Настройки', icon: 'Settings' },
   ];
 
-  const statsData = [
-    { title: 'Активные пользователи', value: '24,589', change: '+12.5%', trend: 'up', icon: 'Users', gradient: 'from-purple-500 to-pink-600' },
-    { title: 'Общая выручка', value: '₽2.4M', change: '+8.2%', trend: 'up', icon: 'DollarSign', gradient: 'from-blue-500 to-cyan-500' },
-    { title: 'Конверсия', value: '3.24%', change: '+0.8%', trend: 'up', icon: 'TrendingUp', gradient: 'from-orange-500 to-red-500' },
-    { title: 'Новые заявки', value: '1,249', change: '-2.4%', trend: 'down', icon: 'FileText', gradient: 'from-green-500 to-emerald-600' },
-  ];
+  const statsData = data ? [
+    { 
+      title: 'Активные пользователи', 
+      value: data.stats.active_users.toLocaleString('ru-RU'), 
+      change: '+12.5%', 
+      trend: 'up', 
+      icon: 'Users', 
+      gradient: 'from-purple-500 to-pink-600' 
+    },
+    { 
+      title: 'Общая выручка', 
+      value: `₽${(data.stats.revenue / 1000000).toFixed(1)}M`, 
+      change: '+8.2%', 
+      trend: 'up', 
+      icon: 'DollarSign', 
+      gradient: 'from-blue-500 to-cyan-500' 
+    },
+    { 
+      title: 'Конверсия', 
+      value: `${data.stats.conversion_rate}%`, 
+      change: '+0.8%', 
+      trend: 'up', 
+      icon: 'TrendingUp', 
+      gradient: 'from-orange-500 to-red-500' 
+    },
+    { 
+      title: 'Новые заявки', 
+      value: data.stats.new_requests.toLocaleString('ru-RU'), 
+      change: '-2.4%', 
+      trend: 'down', 
+      icon: 'FileText', 
+      gradient: 'from-green-500 to-emerald-600' 
+    },
+  ] : [];
 
-  const chartData = [
-    { month: 'Янв', value: 45 },
-    { month: 'Фев', value: 52 },
-    { month: 'Мар', value: 48 },
-    { month: 'Апр', value: 65 },
-    { month: 'Май', value: 71 },
-    { month: 'Июн', value: 68 },
-    { month: 'Июл', value: 85 },
-  ];
+  const chartData = data?.monthly_activity || [];
+  const activityData = data?.system_activity.map((item, index) => ({
+    name: item.name,
+    value: item.value,
+    color: ['bg-purple-500', 'bg-pink-500', 'bg-blue-500', 'bg-orange-500'][index] || 'bg-gray-500'
+  })) || [];
 
-  const activityData = [
-    { name: 'Веб-приложение', value: 68, color: 'bg-purple-500' },
-    { name: 'Мобильное приложение', value: 45, color: 'bg-pink-500' },
-    { name: 'API запросы', value: 82, color: 'bg-blue-500' },
-    { name: 'База данных', value: 35, color: 'bg-orange-500' },
-  ];
+  const maxValue = chartData.length > 0 ? Math.max(...chartData.map(d => d.value)) : 1;
 
-  const maxValue = Math.max(...chartData.map(d => d.value));
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Загрузка данных...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
